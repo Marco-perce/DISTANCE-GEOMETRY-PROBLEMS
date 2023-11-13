@@ -56,17 +56,20 @@ def minimize(f, gradf, hessf, x0, xl, xu, delta0=1.0, deltamin=1e-6, gtol=1e-6, 
         # Step calculation
         sk = solve(gk, Hk, deltak, sl=xl-xk, su=xu-xk)
         model_value = fk + np.dot(gk, sk) + 0.5 * np.dot(sk, Hk.dot(sk))  # mk(sk)
-        rhok = (fk - f(xk + sk)) / (fk - model_value)
-        # Update trust-region radius
-        if rhok < 0.25:
-            deltak = 0.25 * deltak
-        elif rhok > 0.75 and abs(np.linalg.norm(sk) - deltak) < 1e-10:
-            deltak = min(2 * deltak, 1e10)
+        if fk != model_value:
+            rhok = (fk - f(xk + sk)) / (fk - model_value)
+            # Update trust-region radius
+            if rhok < 0.25:
+                deltak = 0.25 * deltak
+            elif rhok > 0.75 and abs(np.linalg.norm(sk) - deltak) < 1e-10:
+                deltak = min(2 * deltak, 1e10)
+            else:
+                deltak = deltak
+            # Update iterate
+            if rhok > 0.01:
+                xk = xk + sk
+            else:
+                xk = xk
         else:
-            deltak = deltak
-        # Update iterate
-        if rhok > 0.01:
-            xk = xk + sk
-        else:
-            xk = xk
+            break
     return xk, k
